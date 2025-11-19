@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#000000" />
+  <!-- Заголовок залишається незмінним -->
+  <title>TikTok Gift</title>
+  <style>
+    :root{
+      /* НОВІ, БІЛЬШ НАСИЧЕНІ ЗМІННІ КОЛЬОРІВ */
+      --bg1:#081423; /* Дуже Темний Синій (Нічне небо) */
+      --ny-red:#e61919; /* Різдвяний Червоний */
+      --ny-green:#008000; /* Ялинковий Зелений */
+      --ny-gold:#ffd700; /* Чисте Золото */
+      --ny-silver:#e0e0e0; /* Яскраве Срібло */
+      --safe-area-inset-top: env(safe-area-inset-top); 
+      --safe-area-inset-bottom: env(safe-area-inset-bottom);
+    }
+    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    html,body{height:100%;margin:0}
+    body{
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Helvetica,Arial,sans-serif;
+      color:#fff;
+      /* НОВОРІЧНИЙ ФОН: Темно-синій, злегка анімований зірковий фон */
+      background: var(--bg1); 
+      background-image: 
+        radial-gradient(circle, #333 1px, transparent 1px), /* Дрібні зірки 1 */
+        radial-gradient(circle, #444 1px, transparent 1px); /* Дрібні зірки 2 */
+      background-size: 50px 50px, 75px 75px; 
+      /* Overlay shimmer animation */
+      animation: festive-bg 20s ease infinite; 
+      overflow:hidden;
+    }
+    
+    /* ВИДАЛЕНО CSS ЕФЕКТ СНІГОПАДУ, ТЕПЕР ВІН БУДЕ В JAVASCRIPT */
+    
+    @keyframes festive-bg {
+      0% { background-position: 0% 50%, 25px 25px; }
+      50% { background-position: 100% 50%, 0px 0px; }
+      100% { background-position: 0% 50%, 25px 25px; }
+    }
+
+    .app{
+      position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+      padding: max(12px, var(--safe-area-inset-top)) 16px max(16px, var(--safe-area-inset-bottom));
+      gap: clamp(16px, 6vh, 28px);
+      z-index: 10; /* Піднімаємо контент над снігом */
+    }
+    .stage{
+      position:relative; width:min(92vw, 520px); aspect-ratio: 1 / 1.05; display:grid; place-items:center;
+    }
+    .chest-wrap{ position:relative; width: min(82vw, 420px); }
+    .chest{
+      width:100%; display:block; 
+      /* ЗОЛОТИЙ ГЛОУ Скрині */
+      filter: drop-shadow(0 0 10px var(--ny-gold)) drop-shadow(0 20px 40px rgba(0,0,0,.65));
+      transition: transform .25s ease;
+    }
+    .chest.bounce{ animation: bounce 1s ease-in-out infinite; }
+    @keyframes bounce{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-1.2%)} }
+    
+    /* Стилі НОВОРІЧНОЇ КНОПКИ: Глибокий Червоний до Золотого (залишається червоною) */
+    .btn{
+      display:inline-grid; place-items:center; width:min(88vw,420px); height:clamp(54px,10.5vh,64px);
+      border-radius:20px; 
+      background: linear-gradient(150deg, var(--ny-red) 70%, var(--ny-gold)); /* Більше Червоного, менше Золота */
+      box-shadow: 0 8px 30px rgba(255,199,44,.55), inset 0 3px 0 rgba(255,255,255,.3); /* Посилена тінь */
+      color:white; font-weight:900; font-size: clamp(19px, 6.5vw, 24px); letter-spacing:.05em; text-transform:uppercase;
+      border:none; outline:none; cursor:pointer; transition: transform .15s ease, opacity .3s ease, filter .2s ease;
+    }
+    .btn:active{ transform: scale(.98); }
+    .btn[disabled]{ opacity:.65; filter:grayscale(.2); cursor:default }
+    .btn.fade-out { opacity:0; pointer-events:none; }
+
+    /* Стилі подарунка з ГЛОУ */
+    .gift{
+      position:absolute; inset:0; margin:auto; width:min(60vw, 280px); aspect-ratio:1/1; border-radius:24px;
+      display:grid; place-items:center; overflow:hidden;
+      transform: translateY(20%) scale(.1); opacity:0; z-index:6;
+      /* СРІБНО-ЧЕРВОНИЙ ГЛОУ для подарунка */
+      filter: drop-shadow(0 0 15px var(--ny-silver)) drop-shadow(0 0 30px var(--ny-red));
+    }
+    .gift img { width:100%; height:100%; object-fit:contain; }
+    .gift.show{ animation: gift-pop 900ms cubic-bezier(.2,1.2,.2,1) forwards }
+    @keyframes gift-pop{
+      0%{ transform: translateY(8%) scale(.1); opacity:0 }
+      60%{ transform: translateY(-6%) scale(1.05); opacity:1 }
+      100%{ transform: translateY(0) scale(1); opacity:1 }
+    }
+
+    /* Стилі тексту "UNLOCKED" - Срібло та Золото */
+    .claimed{
+      position:absolute; top:0%; left:0; right:0; text-align:center; font-weight:1000;
+      font-size: clamp(18px, 6.5vw, 30px); 
+      letter-spacing:.08em; z-index:7; opacity:0; text-transform:uppercase;
+      text-shadow: 0 0 15px var(--ny-silver), 0 0 30px var(--ny-gold); /* Срібло та Золото */
+      line-height: 1.15; 
+    }
+    .claimed.flicker{ animation: flicker 1200ms steps(2,end) infinite alternate, claimed-in .5s ease forwards }
+    @keyframes claimed-in{ from{opacity:0; transform:translateY(-8px)} to{opacity:1; transform:translateY(0)} }
+    @keyframes flicker{ 0%{opacity:.8} 45%{opacity:1} 50%{opacity:.3} 100%{opacity:1} }
+    
+    /* Стилі для анімації розлітання уламків скрині */
+    .shards{ position:absolute; inset:0; pointer-events:none; filter: drop-shadow(0 10px 24px rgba(0,0,0,.55)); z-index:5; }
+    .shard{
+      position:absolute; width:100%; height:100%; background-size:cover; background-position:center; opacity:0;
+      clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+    }
+    .explode .shard{ opacity:1; animation: fly 900ms ease-out forwards; }
+    @keyframes fly{
+      0%{ transform: translate(0,0) rotate(0deg) scale(1); opacity:1 }
+      80%{ opacity:1 }
+      100%{ transform: translate(var(--tx), var(--ty)) rotate(var(--rot)) scale(1.05); opacity:0 }
+    }
+    .explode .chest{ animation: pop-out .45s ease forwards }
+    @keyframes pop-out{ to{ transform: scale(1.05); opacity:0 } }
+    
+    /* Canvas тепер використовується для снігу та конфетті */
+    canvas#confetti{ position:fixed; inset:0; pointer-events:none; z-index: 1; } 
+    
+    @media (min-width: 700px){
+      .app{ gap:28px }
+      .stage{ aspect-ratio: 16 / 11 }
+    }
+  </style>
+</head>
+<body>
+  <div class="app" role="application" aria-label="TikTok Gift Claim">
+    <div class="stage" id="stage">
+      <div class="chest-wrap" id="chestWrap">
+        <!-- Зображення скрині. -->
+        <img id="chest" class="chest bounce" alt="Treasure chest" src="https://i.ibb.co/WNd3dzNs/Chat-GPT-Image-22-2025-12-58-21-1.png" />
+        <div class="shards" id="shards"></div>
+      </div>
+      <!-- Зображення подарунка TikTok -->
+      <div class="gift" id="gift" aria-hidden="true"><img src="https://cdn2.dps.vc/iblock/a79/a79204e0fab55cdc35ca0bdfa019face/8f06121e1c15be8566b3fc02982a2027.png" alt="TikTok Gift"/></div>
+      <!-- Текст залишається незмінним -->
+      <div class="claimed" id="claimed">YOU UNLOCKED<br>TIKTOK GIFT!</div>
+    </div>
+    <!-- Кнопка дії з таймером -->
+    <button id="actionBtn" class="btn" aria-live="polite">Start 00:10</button>
+  </div>
+  <!-- Canvas для анімації снігу та конфетті -->
+  <canvas id="confetti"></canvas>
+  <script>
+    const btn = document.getElementById('actionBtn');
+    const chest = document.getElementById('chest');
+    const shardsWrap = document.getElementById('shards');
+    const gift = document.getElementById('gift');
+    const claimed = document.getElementById('claimed');
+    const stage = document.getElementById('stage');
+    const canvas = document.getElementById('confetti'); 
+    const ctx = canvas.getContext('2d'); 
+    
+    let countdown = 10; 
+    let ticking = false; 
+    let unlocked = false;
+    let particles = []; // Єдиний масив для снігу та конфетті
+    let animationFrameId;
+
+    // Форматує секунди у рядок MM:SS
+    function formatTime(sec){ 
+      let m=Math.floor(sec/60).toString().padStart(2,'0'); 
+      let s=(sec%60).toString().padStart(2,'0'); 
+      return `${m}:${s}`; 
+    }
+
+    // Встановлює текст кнопки
+    function setBtnText(){ 
+      if(!ticking && !unlocked){ 
+        btn.textContent = `Start ${formatTime(countdown)}`; 
+        return; 
+      } 
+      if(ticking){ 
+        btn.textContent = `${formatTime(countdown)}`; 
+      } 
+      if(unlocked){ 
+        btn.textContent = 'OPEN NOW'; 
+      } 
+    }
+    
+    setBtnText();
+
+    // Обробник натискання кнопки
+    btn.addEventListener('click', () => {
+      // 1. Почати відлік
+      if(!ticking && !unlocked){ 
+        ticking = true; 
+        btn.setAttribute('disabled', ''); 
+        setBtnText(); 
+        const iv = setInterval(()=>{ 
+          countdown--; 
+          setBtnText(); 
+          if(countdown <= 0){ 
+            clearInterval(iv); 
+            unlocked = true; 
+            ticking = false; 
+            btn.removeAttribute('disabled'); 
+            setBtnText(); 
+          } 
+        }, 1000); 
+        return; 
+      }
+      // 2. Запустити послідовність розблокування
+      if(unlocked){ 
+        unlockSequence(); 
+      }
+    });
+
+    // Послідовність розблокування (відкриття скрині)
+    function unlockSequence(){ 
+      unlocked = false; 
+      btn.classList.add('fade-out'); // Приховує кнопку
+      btn.setAttribute('disabled',''); 
+      chest.classList.remove('bounce'); // Зупиняє анімацію скрині
+      
+      createShards(); // Створює та запускає анімацію уламків
+      
+      // Запускає анімацію подарунка та конфетті після розлітання уламків
+      setTimeout(()=>{ 
+        gift.classList.add('show'); 
+        claimed.classList.add('flicker'); 
+        launchConfetti(); // Запуск вибуху конфетті
+      }, 350); 
+    }
+    
+    // Створює елементи уламків скрині та анімує їх розліт
+    function createShards(){ 
+      shardsWrap.innerHTML = ''; 
+      const src = chest.getAttribute('src'); 
+      const pieces = [ 
+        'polygon(0% 0%, 50% 0%, 45% 45%, 0% 40%)', 'polygon(50% 0%, 100% 0%, 100% 40%, 55% 45%)',
+        'polygon(0% 40%, 45% 45%, 40% 70%, 0% 65%)', 'polygon(55% 45%, 100% 40%, 100% 65%, 60% 70%)',
+        'polygon(0% 65%, 40% 70%, 35% 100%, 0% 100%)', 'polygon(60% 70%, 100% 65%, 100% 100%, 65% 100%)',
+        'polygon(40% 45%, 60% 45%, 60% 70%, 40% 70%)', 'polygon(45% 0%, 55% 0%, 60% 45%, 40% 45%)'
+      ]; 
+      
+      pieces.forEach((poly, i)=>{ 
+        const d = document.createElement('div'); 
+        d.className = 'shard'; 
+        d.style.backgroundImage = `url(${src})`; 
+        d.style.clipPath = poly; 
+        
+        const angle = (i / pieces.length) * Math.PI * 2 + (Math.random() * .7 - .35); 
+        const dist = 80 + Math.random()*120; 
+        const tx = Math.cos(angle) * dist; 
+        const ty = Math.sin(angle) * dist - 20; 
+        const rot = (Math.random()*120 - 60) + 'deg'; 
+        
+        d.style.setProperty('--tx', tx + 'px'); 
+        d.style.setProperty('--ty', ty + 'px'); 
+        d.style.setProperty('--rot', rot); 
+        shardsWrap.appendChild(d); 
+      }); 
+      
+      stage.classList.add('explode'); 
+      
+      setTimeout(()=>{ 
+        shardsWrap.innerHTML=''; 
+      }, 1200); 
+    }
+    
+    // Функція для налаштування розміру Canvas
+    function resize(){ 
+      canvas.width = window.innerWidth; 
+      canvas.height = window.innerHeight; 
+      // Reset snow position on resize to avoid gaps
+      particles = particles.filter(p => p.type === 'confetti');
+    } 
+    window.addEventListener('resize', resize, {passive:true}); 
+    
+    // Генерація однієї СНІЖИНКИ (для реалістичного снігопаду)
+    function generateSnowflake() {
+        return {
+            type: 'snow',
+            x: Math.random() * canvas.width,
+            y: -10, // Починаємо вище екрану
+            size: Math.random() * 2 + 1.5, // Різний розмір (трохи менші)
+            color: 'white',
+            vx: Math.random() * 0.5 - 0.25, 
+            vy: Math.random() * 0.8 + 0.2, 
+            alpha: Math.random() * 0.5 + 0.5, // Яскравіші сніжинки
+            rotation: Math.random() * Math.PI * 2, // Початкове обертання
+            rotationSpeed: Math.random() * 0.02 - 0.01, // Швидкість обертання
+            g: 0, 
+            wind: Math.random() * 0.1 - 0.05, 
+        };
+    }
+
+    // Функція малювання простої шестикутної сніжинки
+    function drawSnowflake(ctx, x, y, size, alpha, rotation) {
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = size * 0.1; // Товщина ліній залежить від розміру
+        
+        ctx.save();
+        ctx.translate(x, y);
+        ctx.rotate(rotation);
+        
+        // Малюємо 6 основних ліній
+        for (let i = 0; i < 6; i++) {
+            const angle = (Math.PI / 3) * i;
+            const len = size * 0.8;
+            
+            ctx.beginPath();
+            ctx.moveTo(0, 0);
+            ctx.lineTo(Math.cos(angle) * len, Math.sin(angle) * len);
+            ctx.stroke();
+
+            // Додаємо маленькі гілочки (опціонально)
+            const branchLen = len * 0.3;
+            const branchOffset = len * 0.4;
+
+            // Гілочка 1
+            ctx.beginPath();
+            const branchX1 = Math.cos(angle) * branchOffset;
+            const branchY1 = Math.sin(angle) * branchOffset;
+            
+            const branchAngle1 = angle - Math.PI / 6;
+            ctx.moveTo(branchX1, branchY1);
+            ctx.lineTo(branchX1 + Math.cos(branchAngle1) * branchLen, branchY1 + Math.sin(branchAngle1) * branchLen);
+            ctx.stroke();
+
+            // Гілочка 2
+            ctx.beginPath();
+            const branchAngle2 = angle + Math.PI / 6;
+            ctx.moveTo(branchX1, branchY1);
+            ctx.lineTo(branchX1 + Math.cos(branchAngle2) * branchLen, branchY1 + Math.sin(branchAngle2) * branchLen);
+            ctx.stroke();
+        }
+
+        ctx.restore();
+    }
+
+
+    // Функція запуску вибуху КОНФЕТТІ (при відкритті скрині)
+    function launchConfetti(){ 
+      const confettiColors = ['#ffffff', '#e61919', '#008000', '#ffd700', '#e0e0e0', '#87ceeb']; 
+      const shapes = ['square', 'circle', 'line', 'star'];
+      const count = Math.min(600, Math.floor(window.innerWidth * 0.8));
+      const confettiDuration = performance.now() + 7000;
+      
+      for(let i=0;i<count;i++){ 
+        particles.push({ 
+          type: 'confetti',
+          x: canvas.width/2 + (Math.random()*100 - 50), 
+          y: canvas.height*0.35 + (Math.random()*60 - 30), 
+          size: Math.random()*5 + 3, 
+          color: confettiColors[i % confettiColors.length], 
+          vx: (Math.random()*6 - 3) * (1 + Math.random()*0.8), 
+          vy: (Math.random()*-4 - 3), 
+          g: .08 + Math.random()*0.06, 
+          alpha: 1, 
+          rotation: Math.random()*2*Math.PI, 
+          rotationSpeed: (Math.random()*0.2 - 0.1), 
+          shape: shapes[Math.floor(Math.random() * shapes.length)],
+          endTime: confettiDuration // Для контролю завершення
+        }); 
+      } 
+    }
+    
+    // Головний цикл анімації (СНІГ + КОНФЕТТІ)
+    function animateLoop(t){ 
+        // 1. Очищення
+        ctx.clearRect(0, 0, canvas.width, canvas.height); 
+
+        // 2. Додавання нового снігу (контроль щільності)
+        if (Math.random() < 0.25) { // Збільшена щільність снігу
+            particles.push(generateSnowflake());
+        }
+
+        // 3. Оновлення та малювання частинок
+        particles = particles.filter(p => {
+            if (p.type === 'snow') {
+                // Рух снігу: падіння + вітер + обертання
+                p.x += p.vx + p.wind + Math.sin(p.y * 0.005) * 0.1; 
+                p.y += p.vy;
+                p.rotation += p.rotationSpeed;
+                
+                // Перемалювання сніжинки зверху
+                if (p.y > canvas.height) {
+                    p.y = -10;
+                    p.x = Math.random() * canvas.width;
+                }
+
+                // Малювання сніжинки
+                drawSnowflake(ctx, p.x, p.y, p.size, p.alpha, p.rotation);
+                return true;
+
+            } else if (p.type === 'confetti') {
+                // Рух конфетті: вибух + гравітація
+                p.vy += p.g; 
+                p.x += p.vx; 
+                p.y += p.vy; 
+                p.rotation += p.rotationSpeed; 
+                p.alpha *= 0.992; // Згасання
+                
+                // Зникнення конфетті
+                if (p.alpha < 0.05 || p.y > canvas.height + 50) return false; 
+            
+                // Малювання конфетті
+                ctx.globalAlpha = p.alpha; 
+                ctx.fillStyle = p.color; 
+                ctx.save(); 
+                ctx.translate(p.x, p.y); 
+                ctx.rotate(p.rotation); 
+                
+                ctx.beginPath();
+                if (p.shape === 'square') {
+                    ctx.rect(-p.size/2, -p.size/2, p.size, p.size);
+                } else if (p.shape === 'circle') {
+                    ctx.arc(0, 0, p.size/2, 0, Math.PI * 2);
+                } else if (p.shape === 'line') {
+                    ctx.rect(-p.size/2, -p.size/4, p.size, p.size/2);
+                } else if (p.shape === 'star') {
+                    const innerRadius = p.size / 3;
+                    const outerRadius = p.size / 2;
+                    const spikes = 5;
+                    for(let i=0; i<spikes; i++){
+                      let angle = (Math.PI / spikes) * i * 2;
+                      let x = Math.cos(angle) * outerRadius;
+                      let y = Math.sin(angle) * outerRadius;
+                      if (i === 0) ctx.moveTo(x, y);
+                      else ctx.lineTo(x, y);
+                      
+                      angle = (Math.PI / spikes) * (i * 2 + 1);
+                      x = Math.cos(angle) * innerRadius;
+                      y = Math.sin(angle) * innerRadius;
+                      ctx.lineTo(x, y);
+                    }
+                    ctx.closePath(); 
+                }
+                ctx.closePath(); 
+                ctx.fill(); 
+                ctx.restore(); 
+
+                return true; // Зберігаємо частинку
+
+            }
+            return true;
+        }); 
+        
+        ctx.globalAlpha = 1; 
+        animationFrameId = requestAnimationFrame(animateLoop); 
+    }
+    
+    // Ініціалізація
+    resize(); 
+    animateLoop(); // Запускаємо постійну анімацію снігу
+
+  </script>
+</body>
+</html>
